@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"fmt"
+	"math/big"
 )
 
 type ReserveTrustClient struct {
@@ -16,55 +17,58 @@ func NewRTClient(storage MemoStore) ReserveTrustClient {
 }
 
 type ordinalTuple struct {
-	Ordinal int64
-	Fib     int64
+	Ordinal big.Int
+	Fib     big.Int
 }
 
 // Fibonacci returns the largest fibonacci, bounded by the architecture
-func (rc ReserveTrustClient) Fibonacci(ctx context.Context, ordinal int64) (int64, error) {
-	if ordinal < 0 {
-		return 0, NewError(ordinal, ErrorInvalidOrdinal)
-	} else if ordinal == 0 || ordinal == 1 {
+func (rc ReserveTrustClient) Fibonacci(ctx context.Context, ordinal big.Int) (big.Int, error) {
+	if ordinal.Cmp(big.NewInt(0)) == -1 {
+		return *big.NewInt(0), NewError(ordinal, ErrorInvalidOrdinal)
+	} else if ordinal.Cmp(big.NewInt(0)) == 0 || ordinal.Cmp(big.NewInt(1)) == 0 {
 		return ordinal, nil
 	}
 
 	// Check if value has been calculated before, if not, get highest calculated fib
-	fib, exactMatch := rc.Storage.CheckFib(ctx, ordinal)
+	v := big.NewInt(0).SetBytes(ordinal.Bytes())
+	v = v.Add(v, big.NewInt(1))
+	fib, exactMatch := rc.Storage.CheckFib(ctx, *v)
 	if exactMatch {
 		return fib, nil
 	}
 
 	// Calculate new value
-	cache := make(map[int64]int64)
-	cache[0] = 0
-	cache[1] = 1
-	fib, ordinalCacheToStore := simpleFib(ordinal, cache)
+	var ordinalTuplesToStore []ordinalTuple
+	ordinalTuplesToStore = append(ordinalTuplesToStore, ordinalTuple{Ordinal: *big.NewInt(0), Fib: *big.NewInt(0)})
+	ordinalTuplesToStore = append(ordinalTuplesToStore, ordinalTuple{Ordinal: *big.NewInt(1), Fib: *big.NewInt(1)})
 
-	var ordinalTuples []ordinalTuple
-	for k, v := range ordinalCacheToStore {
-		ordinalTuples = append(ordinalTuples, ordinalTuple{Ordinal: k, Fib: v})
+	one := big.NewInt(1)
+	a := big.NewInt(0)
+	b := big.NewInt(1)
+
+	var lowestFib *big.Int
+	if fib.Cmp(big.NewInt(0)) == 0 {
+		lowestFib = big.NewInt(1)
+	} else {
+		lowestFib = &fib
 	}
-	fmt.Println(ordinalTuples)
+
+	for lowestFib.Cmp(&ordinal) <= 0 {
+		// Add to slice for batch storage
+		o := ordinalTuple{Ordinal: *big.NewInt(0).SetBytes(lowestFib.Bytes()), Fib: *big.NewInt(0).SetBytes(a.Bytes())}
+		ordinalTuplesToStore = append(ordinalTuplesToStore, o)
+
+		// Store fib in a
+		a.Add(a, b)
+		a, b = b, a
+		lowestFib.Add(lowestFib, one)
+	}
+
 	// Store new calculated value
-	err := rc.Storage.AddFib(ctx, ordinalTuples)
+	err := rc.Storage.AddFib(ctx, ordinalTuplesToStore)
 	if err != nil {
-		return -1, NewError(ordinal, fmt.Sprintf("%s - %s", ErrorStorageAddError, err.Error()))
+		return *big.NewInt(-1), NewError(ordinal, fmt.Sprintf("%s - %s", ErrorStorageAddError, err.Error()))
 	}
-	cache = make(map[int64]int64)
 
-	if fib < 0 {
-		return -2, NewError(ordinal, ErrorOverflow)
-	}
-	return fib, nil
-}
-
-// simpleFib calculates a memoized fibonacci up to the archtectural bounds, returning the fib itself, and a cache that should be stored
-func simpleFib(ordinalToFind int64, tempCache map[int64]int64) (int64, map[int64]int64) {
-	if val, ok := tempCache[ordinalToFind]; ok {
-		return val, tempCache
-	}
-	v2, tempCache := simpleFib(ordinalToFind-2, tempCache)
-	v1, tempCache := simpleFib(ordinalToFind-1, tempCache)
-	tempCache[ordinalToFind] = v2 + v1
-	return tempCache[ordinalToFind], tempCache
+	return *a, nil
 }

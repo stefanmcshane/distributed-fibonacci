@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/stefanmcshane/distributed-fibonacci/app/business"
@@ -14,6 +15,9 @@ func main() {
 	rt := business.NewRTClient(storage)
 	fib := NewFibApp(rt)
 
-	http.HandleFunc(fmt.Sprintf("%s", endpointFibonacci), fib.handleFibonacci)
-	http.ListenAndServe(":8080", nil)
+	mux := http.NewServeMux()
+	mux.HandleFunc(fmt.Sprintf("%s", endpointFibonacci), fib.handleFibonacci)
+
+	middlewareMux := NewTimer(mux)
+	log.Fatal(http.ListenAndServe(":8080", middlewareMux))
 }

@@ -1,6 +1,9 @@
 package business
 
-import "fmt"
+import (
+	"fmt"
+	"math/big"
+)
 
 const (
 	ErrorInvalidOrdinal  = "Must supply valid ordinal - 0 or above"
@@ -9,15 +12,15 @@ const (
 )
 
 type FibError struct {
-	Ordinal int64
+	Ordinal big.Int
 	Message string
 }
 
 func (f FibError) Error() string {
-	return fmt.Sprintf("error: %s || ordinal: %d", f.Message, f.Ordinal)
+	return fmt.Sprintf("error: %s || ordinal: %s", f.Message, f.Ordinal.String())
 }
 
-func NewError(ordinal int64, message string) FibError {
+func NewError(ordinal big.Int, message string) FibError {
 	return FibError{
 		Ordinal: ordinal,
 		Message: message,
