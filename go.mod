@@ -2,4 +2,4 @@ module github.com/stefanmcshane/distributed-fibonacci
 
 go 1.16
 
-require github.com/dimfeld/httptreemux/v5 v5.3.0 // indirect
+require github.com/lib/pq v1.10.0

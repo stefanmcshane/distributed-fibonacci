@@ -66,11 +66,12 @@ func TestFibonacci(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := c.Fibonacci(context.Background(), tc.ordinal)
-			if (err != nil) && tc.expectError {
+			if (err != nil) && !tc.expectError {
 				t.Errorf("simpleFib() = unexpected error for ordinal %v - %v", tc.ordinal, err)
 			}
 			if got.Cmp(tc.expectedValue) != 0 && tc.expectError == false {
 				t.Errorf("simpleFib() = unexpected fib value for ordinal %v - %s", tc.ordinal, got.String())
+				t.Log(err)
 			}
 		})
 	}

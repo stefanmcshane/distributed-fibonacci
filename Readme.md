@@ -9,7 +9,21 @@ Expose a Fibonacci sequence generator through a web API that memoizes intermedia
 
 The web API must be written in Go, and Postgres must be used as the data store for the memoized results. Please include tests for your solution, and a Readme.md describing how to build and run it.
 
-## Running scenarios
+## Running the service end to end
+
+Run the following commands in order. This will setup a postgres instance in docker, startup the api, and send sample curl requests at the api for each of the required endpoints. Each command will need to be run in a separate shell session, that supports Make.
+
+```
+make db
+```
+```
+make api
+```
+```
+make test-int
+```
+
+## Running test scenarios
 
 * Tests
 ```
@@ -49,16 +63,18 @@ goos: darwin
 goarch: amd64
 pkg: github.com/stefanmcshane/distributed-fibonacci/app/business
 cpu: Intel(R) Core(TM) i7-7920HQ CPU @ 3.10GHz
-BenchmarkFibonacci1-8           16299607                75.09 ns/op           16 B/op          2 allocs/op
-BenchmarkFibonacci5-8             667102              1755 ns/op             624 B/op         28 allocs/op
-BenchmarkFibonacci10-8            393906              3145 ns/op             968 B/op         49 allocs/op
-BenchmarkFibonacci50-8            106753             11149 ns/op            3144 B/op        171 allocs/op
-BenchmarkFibonacci90-8             60796             19554 ns/op            5832 B/op        292 allocs/op
-BenchmarkFibonacci900-8             6302            186754 ns/op           47656 B/op       2727 allocs/op
+BenchmarkFibonacci1-8                   12167211                94.12 ns/op           24 B/op          3 allocs/op
+BenchmarkFibonacci5-8                    3287337               355.0 ns/op            56 B/op          7 allocs/op
+BenchmarkFibonacci10-8                   3818616               416.8 ns/op            56 B/op          7 allocs/op
+BenchmarkFibonacci50-8                   3496898               307.6 ns/op            56 B/op          7 allocs/op
+BenchmarkFibonacci90-8                   3770887               321.1 ns/op            56 B/op          7 allocs/op
+BenchmarkFibonacci900-8                  3573072               320.3 ns/op            56 B/op          7 allocs/op
+BenchmarkFibonacci900_2000Cached-8       1615108               671.3 ns/op           142 B/op         14 allocs/op
+BenchmarkFibonacci2000_900Cached-8       1801986               627.0 ns/op           139 B/op         14 allocs/op
 PASS
-ok      github.com/stefanmcshane/distributed-fibonacci/app/business     7.819s
 ```
 
 ## Notes:
 * Originally implemented in int64. This will cap out at the max int available to the arch, which would be ordinal 92 for a 64-bit arch, 46 for a 32 bit-arch
     * Could be avoided by using a big.Int, or by making a generic structure for storing data which holds the bytes, and the type
+* No integration tests for spinning up docker and database, no mocks written for this either as the inmemory database serves a similiar purpose as the mocks

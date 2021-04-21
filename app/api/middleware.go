@@ -19,5 +19,5 @@ func (t *Timer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	t.handler.ServeHTTP(w, r)
 	duration := time.Now().Sub(startTime)
-	fmt.Printf("%s served in %f seconds", r.URL, duration.Seconds())
+	fmt.Printf("%s served in %f seconds\n", r.URL, duration.Seconds())
 }

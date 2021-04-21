@@ -8,12 +8,15 @@ import (
 )
 
 const (
-	endpointFibonacci = "/fibonacci/"
+	endpointFibonacci    = "/fibonacci/"
+	endpointResultsUnder = "/results-under/"
+	endpointClearCache   = "/clear-cache/"
 )
 
 type fibonacciResponse struct {
-	Ordinal   fibBigInt `json:"ordinal"`
-	Fibonacci fibBigInt `json:"fibonacci"`
+	Ordinal   *fibBigInt `json:"ordinal,omitempty"`
+	Fibonacci *fibBigInt `json:"fibonacci,omitempty"`
+	Count     int        `json:"count,omitempty"`
 }
 
 type fibBigInt big.Int

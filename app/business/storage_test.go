@@ -28,32 +28,32 @@ func TestInMemoryStorageAdd(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			c := testNewRTClientInMemoryStorage()
-			for o := 0; o < tc.topOrdinal; o++ {
+			for o := 2; o < tc.topOrdinal; o++ {
 				v := *big.NewInt(int64(o))
-				_, match := c.Storage.CheckFib(ctx, v)
-				if match {
+				_, err := c.Storage.CheckFib(ctx, v)
+				if err == nil {
 					t.Errorf("CheckFib1() = unexpected match checking from in-memory cache %v", v)
 				}
-				err := c.Storage.AddFib(ctx, []ordinalTuple{{Ordinal: v, Fib: v}})
+				err = c.Storage.AddFib(ctx, []ordinalTuple{{Ordinal: v, Fib: v}})
 				if err != nil {
 					t.Errorf("AddFib() = unexpected error adding to in-memory cache %v - %v", v, err)
 				}
-				_, match2 := c.Storage.CheckFib(ctx, v)
-				if !match2 {
+				_, err = c.Storage.CheckFib(ctx, v)
+				if err != nil {
 					t.Errorf("CheckFib2() = expected match not in in-memory cache %v", v)
 				}
 			}
 			randVal := int64(rand.Intn(tc.topOrdinal))
-			_, randMatch := c.Storage.CheckFib(ctx, *big.NewInt(randVal))
-			if !randMatch {
+			_, err := c.Storage.CheckFib(ctx, *big.NewInt(randVal))
+			if err != nil {
 				t.Errorf("CheckFib3() = expected match not in in-memory cache %d", randVal)
 			}
-			_, highestMatch := c.Storage.CheckFib(ctx, *big.NewInt(int64(tc.topOrdinal) - 1))
-			if !highestMatch {
+			_, err = c.Storage.CheckFib(ctx, *big.NewInt(int64(tc.topOrdinal) - 1))
+			if err != nil {
 				t.Errorf("CheckFib4() = expected match not in in-memory cache %d", tc.topOrdinal)
 			}
-			_, lowestMatch := c.Storage.CheckFib(ctx, *big.NewInt(0))
-			if !lowestMatch {
+			_, err = c.Storage.CheckFib(ctx, *big.NewInt(0))
+			if err != nil {
 				t.Errorf("CheckFib5() = expected match not in in-memory cache %d", 0)
 			}
 		})
@@ -114,18 +114,22 @@ func TestInMemoryStorageClear(t *testing.T) {
 			t.Errorf("TestInMemoryStorageClear() = unexpected error adding to in-memory cache %v - %v", v, err)
 		}
 	}
+	_, err := c.Storage.CheckFib(ctx, *big.NewInt(10))
+	if err != nil {
+		t.Errorf("TestInMemoryStorageClear() = expected match in in-memory cache %d for ordinal 0", 0)
+	}
 
-	err := c.Storage.Clear(ctx)
+	err = c.Storage.Clear(ctx)
 	if err != nil {
 		t.Errorf("TestInMemoryStorageClear() = unexpected error clearinbg in-memory cache - %v", err)
 	}
-	lowest, lowestMatch := c.Storage.CheckFib(ctx, *big.NewInt(0))
-	if lowestMatch {
+	lowest, err := c.Storage.CheckFib(ctx, *big.NewInt(0))
+	if err == nil {
 		t.Errorf("TestInMemoryStorageClear() = expected no match in in-memory cache %d - got %d", 0, lowest.Int64())
 	}
 	randVal := int64(rand.Intn(max))
-	randGot, randMatch := c.Storage.CheckFib(ctx, *big.NewInt(randVal))
-	if randMatch {
+	randGot, err := c.Storage.CheckFib(ctx, *big.NewInt(randVal))
+	if err == nil {
 		t.Errorf("TestInMemoryStorageClear() = expected no match in in-memory cache %d - got %d", randVal, randGot.Int64())
 	}
 }
