@@ -102,15 +102,11 @@ func (s DBStore) ResultsUnder(ctx context.Context, fibValue big.Int) int {
 
 func (s DBStore) Clear(ctx context.Context) error {
 	q := fmt.Sprintf("TRUNCATE TABLE %s", dbTableFibonacci)
-	result, err := s.DB.Exec(q)
+	_, err := s.DB.Exec(q)
 	if err != nil {
 		return err
 	}
-	af, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	fmt.Println("deleted rows from database - ", af)
+	fmt.Println("deleted rows from database")
 	return nil
 }
 
